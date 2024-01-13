@@ -6,8 +6,8 @@ function App() {
   return (
       <Router>
         <Routes>
-          <Route path="/" Component={ListPage} />
-          <Route path="/list" Component={ListPage} />
+          <Route path="/" element={<ListPage/>} />
+          <Route path="/list" element={<ListPage/>} />
           {/* 他のルートをここに追加 */}
         </Routes>
       </Router>
