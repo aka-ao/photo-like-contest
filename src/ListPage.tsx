@@ -18,22 +18,27 @@ const ListPage = () => {
   const [images, setImages] = useState<string[]>([]);
   const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
   const [isNoFileSnackbarOpen, setIsNoFileSnackbarOpen] = useState(false);
+  const [errorState, setErrorState] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const fetchImages = async () => {
-    const storageRef = ref(storage, "images/");
-    const result = await listAll(storageRef);
-    const sorted  = result.items.sort((a, b) => {
-      if (a.name < b.name) {
-        return -1;
-      }
-      return 1;
-    });
-    const urlPromises = sorted.map((imageRef) =>
-      getDownloadURL(imageRef)
-    );
+    try {
+      const storageRef = ref(storage, "images/");
+      const result = await listAll(storageRef);
+      const sorted = result.items.sort((a, b) => {
+        if (a.name < b.name) {
+          return -1;
+        }
+        return 1;
+      });
+      const urlPromises = sorted.map((imageRef) => getDownloadURL(imageRef));
 
-    const urls = await Promise.all(urlPromises);
-    setImages(urls);
+      const urls = await Promise.all(urlPromises);
+      setImages(urls);
+    } catch (error) {
+      setErrorState(true);
+      setErrorMessage("画像を取得できませんでした。");
+    }
   };
 
   useEffect(() => {
@@ -47,32 +52,39 @@ const ListPage = () => {
   };
 
   const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const files = fileInputRef.current?.files;
-    if (!files || files.length == 0) {
-      setIsNoFileSnackbarOpen(true);
-      return;
-    }
+    try {
+      event.preventDefault();
+      const files = fileInputRef.current?.files;
+      if (!files || files.length == 0) {
+        setIsNoFileSnackbarOpen(true);
+        return;
+      }
 
-    const storage = getStorage();
-    const storageRef = ref(storage, "images/");
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const fileRef = ref(storageRef, `${file.name}`);
-      await uploadBytes(fileRef, file);
-      console.log(`${file.name}をアップロードしました`);
-    }
-    console.log("アップロード完了");
-    setIsSnackbarOpen(true);
-    // アップロード後にフォームをリセットする
-    fileInputRef.current.value = "";
+      const storage = getStorage();
+      const storageRef = ref(storage, "images/");
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileRef = ref(storageRef, `${file.name}`);
+        await uploadBytes(fileRef, file);
+        console.log(`${file.name}をアップロードしました`);
+      }
+      console.log("アップロード完了");
+      setIsSnackbarOpen(true);
+      // アップロード後にフォームをリセットする
+      fileInputRef.current.value = "";
 
-  fetchImages();
+      fetchImages();
+    } catch (error) {
+      setErrorState(true);
+      setErrorMessage("画像のアップロードに失敗しました。");
+    }
   };
 
   const handleSnackbarClose = () => {
     setIsSnackbarOpen(false);
     setIsNoFileSnackbarOpen(false);
+    setErrorState(false);
+    setErrorMessage("");
   };
 
   return (
@@ -114,6 +126,12 @@ const ListPage = () => {
         autoHideDuration={3000}
         onClose={handleSnackbarClose}
         message="ファイルが選択されていません"
+      />
+      <Snackbar
+        open={errorState}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        message={errorMessage}
       />
     </div>
   );
