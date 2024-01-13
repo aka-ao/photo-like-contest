@@ -58,7 +58,7 @@ const ListPage = () => {
     const storageRef = ref(storage, "images/");
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const fileRef = ref(storageRef, `${file.name}}`);
+      const fileRef = ref(storageRef, `${file.name}`);
       await uploadBytes(fileRef, file);
       console.log(`${file.name}をアップロードしました`);
     }
