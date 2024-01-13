@@ -55,7 +55,7 @@ const ListPage = () => {
     try {
       event.preventDefault();
       const files = fileInputRef.current?.files;
-      if (!files || files.length == 0) {
+      if (!files || files.length === 0) {
         setIsNoFileSnackbarOpen(true);
         return;
       }
