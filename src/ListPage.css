@@ -1,4 +1,5 @@
 .image-grid {
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -27,6 +28,7 @@
 }
 
 .upload-form {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
