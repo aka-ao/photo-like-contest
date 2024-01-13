@@ -36,6 +36,7 @@ const ListPage = () => {
       const urls = await Promise.all(urlPromises);
       setImages(urls);
     } catch (error) {
+      console.log(error);
       setErrorState(true);
       setErrorMessage("画像を取得できませんでした。");
     }
@@ -75,6 +76,7 @@ const ListPage = () => {
 
       fetchImages();
     } catch (error) {
+      console.log(error);
       setErrorState(true);
       setErrorMessage("画像のアップロードに失敗しました。");
     }
