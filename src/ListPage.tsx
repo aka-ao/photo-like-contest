@@ -90,7 +90,7 @@ const ListPage = () => {
   };
 
   return (
-    <div className="list-page" style={{ boxSizing: 'border-box', padding: '0 5px' }}>
+    <div className="list-page">
       <div className="image-grid">
         {images.map((url, index) => (
           <div key={index} className="image-item">

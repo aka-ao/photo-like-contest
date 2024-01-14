@@ -1,3 +1,8 @@
+.list-page {
+  box-sizing: 'border-box';
+  padding: '0 5px';
+}
+
 .image-grid {
   width: 100%;
   display: flex;
