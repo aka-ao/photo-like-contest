@@ -1,3 +1,9 @@
+.list-page {
+  box-sizing: 'border-box';
+  padding: 0 5px;
+  overflow-x: hidden;
+}
+
 .image-grid {
   width: 100%;
   display: flex;
@@ -13,9 +19,6 @@
 .image-item img {
   width: 100%;
   height: auto;
-  padding-left: 10px;
-  padding-right: 10px;
-  padding-top: 10px;
 }
 
 .upload-form-container {
