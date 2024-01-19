@@ -23,6 +23,7 @@ const ListPage = () => {
 
   const fetchImages = async () => {
     try {
+      console.log(process.env.REACT_APP_FIREBASE_STORAGE_BUCKET)
       const storageRef = ref(storage, "images/");
       const result = await listAll(storageRef);
       const sorted = result.items.sort((a, b) => {
