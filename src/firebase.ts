@@ -15,6 +15,6 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const storage = getStorage(app, "gs://akahori-wedding-20241110.appspot.com");
+const storage = getStorage(app);
 
 export { app, storage };
