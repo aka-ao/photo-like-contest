@@ -98,24 +98,26 @@ const ListPage = () => {
           </div>
         ))}
       </div>
-      <div className="upload-form">
-        <form onSubmit={handleFormSubmit}>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            ref={fileInputRef}
-            style={{ display: "none" }}
-          />
-          <div className="icon-container">
-            <IconButton onClick={handleAddButtonClick}>
-              <AddIcon />
-            </IconButton>
-            <IconButton type="submit">
-              <SendIcon />
-            </IconButton>
-          </div>
-        </form>
+      <div className="upload-form-container">
+        <div className="upload-form">
+          <form onSubmit={handleFormSubmit}>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              ref={fileInputRef}
+              style={{ display: "none" }}
+            />
+            <div className="icon-container">
+              <IconButton onClick={handleAddButtonClick}>
+                <AddIcon />
+              </IconButton>
+              <IconButton type="submit">
+                <SendIcon />
+              </IconButton>
+            </div>
+          </form>
+        </div>
       </div>
       <Snackbar
         open={isSnackbarOpen}

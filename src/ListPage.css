@@ -22,28 +22,14 @@
 }
 
 .upload-form-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  min-height: 100vh;
-  position: relative;
-}
-
-.upload-form {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: sticky;
+  position: fixed;
   bottom: 0;
-  padding: 16px;
-  background-color: white;
-  z-index: 1;
-}
-
-.icon-container {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #fff; /* ここで背景色を指定。色はお好みで変更してください。 */
   display: flex;
   justify-content: center;
-  margin-bottom: 16px;
+  align-items: center;
+  padding: 10px 0; /* 必要に応じてパディングを調整 */
+  box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.2); /* 影を追加 */
 }
