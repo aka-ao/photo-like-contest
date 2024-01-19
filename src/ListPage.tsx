@@ -158,7 +158,7 @@ const ListPage = () => {
       <div className="image-grid">
         {images.map((image, index) => (
           <div key={index} className="image-item">
-            <img src={image} alt="" />
+            <img src={image} alt="" loading="lazy" />
             <IconButton
               className="like-icon"
               onClick={async() => handleFavoriteButtonClick(image, "test_user")}
