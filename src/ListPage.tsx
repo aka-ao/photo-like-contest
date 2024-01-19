@@ -23,6 +23,7 @@ const ListPage = () => {
 
   const fetchImages = async () => {
     try {
+      console.log(process.env.REACT_APP_FIREBASE_STORAGE_BUCKET)
       const storageRef = ref(storage, "images/");
       const result = await listAll(storageRef);
       const sorted = result.items.sort((a, b) => {
@@ -98,24 +99,26 @@ const ListPage = () => {
           </div>
         ))}
       </div>
-      <div className="upload-form">
-        <form onSubmit={handleFormSubmit}>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            ref={fileInputRef}
-            style={{ display: "none" }}
-          />
-          <div className="icon-container">
-            <IconButton onClick={handleAddButtonClick}>
-              <AddIcon />
-            </IconButton>
-            <IconButton type="submit">
-              <SendIcon />
-            </IconButton>
-          </div>
-        </form>
+      <div className="upload-form-container">
+        <div className="upload-form">
+          <form onSubmit={handleFormSubmit}>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              ref={fileInputRef}
+              style={{ display: "none" }}
+            />
+            <div className="icon-container">
+              <IconButton onClick={handleAddButtonClick}>
+                <AddIcon />
+              </IconButton>
+              <IconButton type="submit">
+                <SendIcon />
+              </IconButton>
+            </div>
+          </form>
+        </div>
       </div>
       <Snackbar
         open={isSnackbarOpen}
