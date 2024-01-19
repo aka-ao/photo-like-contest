@@ -47,22 +47,21 @@ const ListPage = () => {
     }
   };
   const fetchFavorites = async () => {
-    const userFavoritesRef = dbRef(database, "userFavorites/" + "test_user");
+    const userFavoritesRef = dbRef(database, "userFavorites/test_user");
     const fav: string[] = [];
-    await get(userFavoritesRef)
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          for (const key in data) {
-            fav.push(data[key].url);
-          }
-        } else {
-          console.log("No data available");
+    await get(userFavoritesRef).then((snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        for (const key in data) {
+          fav.push(data[key].url);
         }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+      } else {
+        console.log("No data available");
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+    });
     setFavorites(fav);
   }
 
