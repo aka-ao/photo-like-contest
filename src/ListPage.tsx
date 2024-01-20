@@ -116,15 +116,18 @@ const ListPage = () => {
 
   const handleFavoriteButtonClick = async(url: string, username: string) => {
     if (!favorites.includes(url)) {
+      if(favorites.length >= 5) {
+        setErrorState(true);
+        setErrorMessage("お気に入りは5つまでです。");
+        return;
+      }
       const userFavoritesRef = dbRef(database, "userFavorites/" + username);
       push(userFavoritesRef, {
         url: url,
       });
       await fetchFavorites();
-      console.log("お気に入りに追加");
       return;
     }
-    console.log("お気に入りから削除");
     const userFavoritesRef = dbRef(database, "userFavorites/" + username);
     await get(userFavoritesRef)
       .then((snapshot) => {
