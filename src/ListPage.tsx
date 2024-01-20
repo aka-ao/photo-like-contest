@@ -101,7 +101,7 @@ const ListPage = () => {
         imageGrid.style.marginBottom = marginBottom;
       }
     }
-  }, []);
+  }, [fetchImages, fetchFavorites]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
