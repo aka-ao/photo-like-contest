@@ -91,7 +91,36 @@ const ListPage = () => {
   };
 
   useEffect(() => {
-    fetchImages();
+    const fetchImagesFirst = async () => {
+      try {
+        const storageRef = ref(storage, "images/");
+        const result = await listAll(storageRef);
+        const sorted = result.items.sort((a, b) => {
+          if (a.name < b.name) {
+            return -1;
+          }
+          return 1;
+        });
+        const urlPromises = sorted.map(async (imageRef) => {
+          const url = await getDownloadURL(imageRef);
+          const name = imageRef.name;
+          return {
+            url: url,
+            resizedUrl: resizedImage(url, name),
+            name: name,
+          };
+        });
+  
+        const urls = await Promise.all(urlPromises);
+        setImages(urls);
+      } catch (error) {
+        console.log(error);
+        setErrorState(true);
+        setErrorMessage("画像を取得できませんでした。");
+      }
+    }
+
+    fetchImagesFirst();
     fetchFavorites();
     if (uploadFormContainerRef.current) {
       const marginBottom = `${uploadFormContainerRef.current.offsetHeight}px`;
@@ -101,7 +130,7 @@ const ListPage = () => {
         imageGrid.style.marginBottom = marginBottom;
       }
     }
-  }, [fetchImages, fetchFavorites]);
+  }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
