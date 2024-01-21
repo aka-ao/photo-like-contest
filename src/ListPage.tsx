@@ -156,19 +156,19 @@ const ListPage = () => {
   };
 
   const handleFavoriteButtonClick = async (url: string, username: string) => {
+    const userFavoritesRef = dbRef(database, "userFavorites/" + username);
     if (!favorites.includes(url)) {
       if(favorites.length >= 5) {
         setErrorState(true);
         setErrorMessage("お気に入りは5つまでです。");
         return;
       }
-      const userFavoritesRef = dbRef(database, "userFavorites/" + username);
       push(userFavoritesRef, {
         url: url,
       });
       setFavorites([...favorites, url]);
+      return;
     }
-    const userFavoritesRef = dbRef(database, "userFavorites/" + username);
     await get(userFavoritesRef)
       .then((snapshot) => {
         if (snapshot.exists()) {
