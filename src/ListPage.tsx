@@ -33,55 +33,6 @@ const ListPage = () => {
   const [open, setOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<Image | null>(null);
 
-  const fetchImages = async () => {
-    try {
-      const storageRef = ref(storage, "images/");
-      const result = await listAll(storageRef);
-      const sorted = result.items.sort((a, b) => {
-        if (a.name < b.name) {
-          return -1;
-        }
-        return 1;
-      });
-      const urlPromises = sorted.map(async (imageRef) => {
-        const url = await getDownloadURL(imageRef);
-        const name = imageRef.name;
-        return {
-          url: url,
-          resizedUrl: resizedImage(url, name),
-          name: name,
-        };
-      });
-
-      const urls = await Promise.all(urlPromises);
-      setImages(urls);
-    } catch (error) {
-      console.log(error);
-      setErrorState(true);
-      setErrorMessage("画像を取得できませんでした。");
-    }
-  };
-
-  const fetchFavorites = async () => {
-    const userFavoritesRef = dbRef(database, "userFavorites/test_user");
-    const fav: string[] = [];
-    await get(userFavoritesRef)
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          for (const key in data) {
-            fav.push(data[key].url);
-          }
-        } else {
-          console.log("No data available");
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-    setFavorites(fav);
-  };
-
   const handleImageClick = (image: Image) => {
     setSelectedImage(image);
     setOpen(true);
@@ -91,7 +42,38 @@ const ListPage = () => {
   };
 
   useEffect(() => {
-    const fetchImagesFirst = async () => {
+    if (uploadFormContainerRef.current) {
+      const marginBottom = `${uploadFormContainerRef.current.offsetHeight}px`;
+      const imageGrid = document.querySelector(".image-grid");
+      if (imageGrid) {
+        const imageGrid = document.querySelector(".image-grid") as HTMLElement;
+        imageGrid.style.marginBottom = marginBottom;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const userFavoritesRef = dbRef(database, "userFavorites/test_user");
+    const fav: string[] = [];
+    get(userFavoritesRef)
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          for (const key in data) {
+            fav.push(data[key].url);
+          }
+          setFavorites(fav);
+        } else {
+          console.log("No data available");
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, []);
+
+  useEffect(() => {
+    const fetchImages = async () => {
       try {
         const storageRef = ref(storage, "images/");
         const result = await listAll(storageRef);
@@ -120,16 +102,7 @@ const ListPage = () => {
       }
     }
 
-    fetchImagesFirst();
-    fetchFavorites();
-    if (uploadFormContainerRef.current) {
-      const marginBottom = `${uploadFormContainerRef.current.offsetHeight}px`;
-      const imageGrid = document.querySelector(".image-grid");
-      if (imageGrid) {
-        const imageGrid = document.querySelector(".image-grid") as HTMLElement;
-        imageGrid.style.marginBottom = marginBottom;
-      }
-    }
+    fetchImages();
   }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -162,7 +135,12 @@ const ListPage = () => {
         const file = files[i];
         const fileRef = ref(storageRef, `${file.name}`);
         await uploadBytes(fileRef, file);
-        console.log(`${file.name}をアップロードしました`);
+        const url = await getDownloadURL(fileRef);
+        setImages([...images, {
+          url: url,
+          resizedUrl: resizedImage(url, file.name),
+          name: file.name,
+        }])
       }
       console.log("アップロード完了");
       // アップロード後にフォームをリセットする
@@ -170,7 +148,6 @@ const ListPage = () => {
 
       await new Promise((resolve) => setTimeout(resolve, 3000));
       setIsSnackbarOpen(true);
-      fetchImages();
     } catch (error) {
       console.log(error);
       setErrorState(true);
@@ -189,8 +166,7 @@ const ListPage = () => {
       push(userFavoritesRef, {
         url: url,
       });
-      await fetchFavorites();
-      return;
+      setFavorites([...favorites, url]);
     }
     const userFavoritesRef = dbRef(database, "userFavorites/" + username);
     await get(userFavoritesRef)
@@ -204,6 +180,9 @@ const ListPage = () => {
                 "userFavorites/" + username + "/" + key
               );
               set(deleteRef, {});
+              setFavorites(favorites.filter((favorite) => {
+                return favorite !== url;
+              }));
             }
           }
         } else {
@@ -213,7 +192,6 @@ const ListPage = () => {
       .catch((error) => {
         console.error(error);
       });
-    await fetchFavorites(); // お気に入り削除後にお気に入りを再取得
   };
 
   const handleSnackbarClose = () => {
