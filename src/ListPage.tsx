@@ -141,12 +141,12 @@ const ListPage = () => {
           resizedUrl: resizedImage(url, file.name),
           name: file.name,
         }])
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       }
       console.log("アップロード完了");
       // アップロード後にフォームをリセットする
       fileInputRef.current.value = "";
 
-      await new Promise((resolve) => setTimeout(resolve, 3000));
       setIsSnackbarOpen(true);
     } catch (error) {
       console.log(error);
