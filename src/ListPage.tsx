@@ -3,7 +3,7 @@ import {
   getDownloadURL,
   getStorage,
   listAll,
-  ref,
+  ref as storageRef,
   uploadBytes,
 } from "firebase/storage";
 import React, { useEffect, useRef, useState } from "react";
@@ -75,8 +75,8 @@ const ListPage = () => {
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        const storageRef = ref(storage, "images/");
-        const result = await listAll(storageRef);
+        const stRef = storageRef(storage, "images/");
+        const result = await listAll(stRef);
         const sorted = result.items.sort((a, b) => {
           if (a.name < b.name) {
             return -1;
@@ -130,10 +130,10 @@ const ListPage = () => {
       }
 
       const storage = getStorage();
-      const storageRef = ref(storage, "images/");
+      const stRef = storageRef(storage, "images/");
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const fileRef = ref(storageRef, `${file.name}`);
+        const fileRef = storageRef(stRef, `${file.name}`);
         await uploadBytes(fileRef, file);
         const url = await getDownloadURL(fileRef);
         setImages([...images, {
