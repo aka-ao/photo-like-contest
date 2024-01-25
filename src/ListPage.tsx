@@ -74,35 +74,35 @@ const ListPage = () => {
 
   useEffect(() => {
     const fetchImages = async () => {
-      try {
-        const stRef = storageRef(storage, "images/");
-        const result = await listAll(stRef);
-        const sorted = result.items.sort((a, b) => {
-          if (a.name < b.name) {
-            return -1;
-          }
-          return 1;
-        });
-        const urlPromises = sorted.map(async (imageRef) => {
-          const url = await getDownloadURL(imageRef);
-          const name = imageRef.name;
-          return {
-            url: url,
-            resizedUrl: resizedImage(url, name),
-            name: name,
-          };
-        });
-  
-        const urls = await Promise.all(urlPromises);
-        setImages(urls);
-      } catch (error) {
-        console.log(error);
-        setErrorState(true);
-        setErrorMessage("画像を取得できませんでした。");
-      }
-    }
+      const stRef = storageRef(storage, "images/");
+      const result = await listAll(stRef);
+      const sorted = result.items.sort((a, b) => {
+        if (a.name < b.name) {
+          return -1;
+        }
+        return 1;
+      });
+      const urlPromises = sorted.map(async (imageRef) => {
+        const url = await getDownloadURL(imageRef);
+        const name = imageRef.name;
+        return {
+          url: url,
+          resizedUrl: resizedImage(url, name),
+          name: name,
+        };
+      });
 
-    fetchImages();
+      const urls = await Promise.all(urlPromises);
+      setImages(urls);
+    };
+
+    try {
+      fetchImages();
+    } catch (error) {
+      console.log(error);
+      setErrorState(true);
+      setErrorMessage("画像を取得できませんでした。");
+    }
   }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -136,11 +136,14 @@ const ListPage = () => {
         const fileRef = storageRef(stRef, `${file.name}`);
         await uploadBytes(fileRef, file);
         const url = await getDownloadURL(fileRef);
-        setImages([...images, {
-          url: url,
-          resizedUrl: resizedImage(url, file.name),
-          name: file.name,
-        }])
+        setImages([
+          ...images,
+          {
+            url: url,
+            resizedUrl: resizedImage(url, file.name),
+            name: file.name,
+          },
+        ]);
         await new Promise((resolve) => setTimeout(resolve, 3000));
       }
       console.log("アップロード完了");
@@ -158,7 +161,7 @@ const ListPage = () => {
   const handleFavoriteButtonClick = async (url: string, username: string) => {
     const userFavoritesRef = dbRef(database, "userFavorites/" + username);
     if (!favorites.includes(url)) {
-      if(favorites.length >= 5) {
+      if (favorites.length >= 5) {
         setErrorState(true);
         setErrorMessage("お気に入りは5つまでです。");
         return;
@@ -180,9 +183,11 @@ const ListPage = () => {
                 "userFavorites/" + username + "/" + key
               );
               set(deleteRef, {});
-              setFavorites(favorites.filter((favorite) => {
-                return favorite !== url;
-              }));
+              setFavorites(
+                favorites.filter((favorite) => {
+                  return favorite !== url;
+                })
+              );
             }
           }
         } else {
