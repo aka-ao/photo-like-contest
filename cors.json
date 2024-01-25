@@ -1,0 +1,8 @@
+[
+    {
+        "origin": ["https://akahori-wedding-20241110.web.app"],
+        "method": ["GET"],
+        "maxAgeSeconds": 3600,
+        "responseType": ["Content-Type", "access-control-allow-origin"]
+    }
+]
