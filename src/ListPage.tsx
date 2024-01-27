@@ -32,6 +32,7 @@ const ListPage = () => {
   const uploadFormContainerRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<Image | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   const handleImageClick = (image: Image) => {
     setSelectedImage(image);
@@ -105,6 +106,11 @@ const ListPage = () => {
     }
   }, []);
 
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddButtonClick = () => {
@@ -159,44 +165,46 @@ const ListPage = () => {
   };
 
   const handleFavoriteButtonClick = async (url: string, username: string) => {
-    const userFavoritesRef = dbRef(database, "userFavorites/" + username);
-    if (!favorites.includes(url)) {
-      if (favorites.length >= 5) {
-        setErrorState(true);
-        setErrorMessage("お気に入りは5つまでです。");
+    if (isMounted) {
+      const userFavoritesRef = dbRef(database, "userFavorites/" + username);
+      if (!favorites.includes(url)) {
+        if (favorites.length >= 5) {
+          setErrorState(true);
+          setErrorMessage("お気に入りは5つまでです。");
+          return;
+        }
+        push(userFavoritesRef, {
+          url: url,
+        });
+        setFavorites([...favorites, url]);
         return;
       }
-      push(userFavoritesRef, {
-        url: url,
-      });
-      setFavorites([...favorites, url]);
-      return;
-    }
-    await get(userFavoritesRef)
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          for (const key in data) {
-            if (data[key].url === url) {
-              const deleteRef = dbRef(
-                database,
-                "userFavorites/" + username + "/" + key
-              );
-              set(deleteRef, {});
-              setFavorites(
-                favorites.filter((favorite) => {
-                  return favorite !== url;
-                })
-              );
+      await get(userFavoritesRef)
+        .then((snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            for (const key in data) {
+              if (data[key].url === url) {
+                const deleteRef = dbRef(
+                  database,
+                  "userFavorites/" + username + "/" + key
+                );
+                set(deleteRef, {});
+                setFavorites(
+                  favorites.filter((favorite) => {
+                    return favorite !== url;
+                  })
+                );
+              }
             }
+          } else {
+            console.log("No data available");
           }
-        } else {
-          console.log("No data available");
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
   };
 
   const handleSnackbarClose = () => {
