@@ -1,87 +1,129 @@
+import { ref as dbRef, get, push } from "firebase/database";
 import {
   getDownloadURL,
   getStorage,
   listAll,
-  ref,
+  ref as storageRef,
   uploadBytes,
 } from "firebase/storage";
-import { ref as dbRef, get, push } from "firebase/database";
 import React, { useEffect, useRef, useState } from "react";
 import { database, storage } from "./firebase";
 
 import AddIcon from "@mui/icons-material/Add";
-import SendIcon from "@mui/icons-material/Send";
-import { Snackbar } from "@mui/material";
-import IconButton from "@mui/material/IconButton";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import "./ListPage.css"; // CSSをインポート
+import SendIcon from "@mui/icons-material/Send";
+import { Modal, Snackbar } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
 import { set } from "firebase/database";
+import "./ListPage.css"; // CSSをインポート
 
 const ListPage = () => {
-  const [images, setImages] = useState<string[]>([]);
+  type Image = {
+    url: string;
+    resizedUrl: string;
+    name: string;
+  };
+  const [images, setImages] = useState<Image[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]); // お気に入りの画像のURLを格納する配列
   const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
   const [isNoFileSnackbarOpen, setIsNoFileSnackbarOpen] = useState(false);
   const [errorState, setErrorState] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const uploadFormContainerRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<Image | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
-  const fetchImages = async () => {
-    try {
-      const storageRef = ref(storage, "images/");
-      const result = await listAll(storageRef);
+  const handleImageClick = (image: Image) => {
+    setSelectedImage(image);
+    setOpen(true);
+  };
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  useEffect(() => {
+    if (uploadFormContainerRef.current) {
+      const marginBottom = `${uploadFormContainerRef.current.offsetHeight}px`;
+      const imageGrid = document.querySelector(".image-grid");
+      if (imageGrid) {
+        const imageGrid = document.querySelector(".image-grid") as HTMLElement;
+        imageGrid.style.marginBottom = marginBottom;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const userFavoritesRef = dbRef(database, "userFavorites/test_user");
+    const fav: string[] = [];
+    get(userFavoritesRef)
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          for (const key in data) {
+            fav.push(data[key].url);
+          }
+          setFavorites(fav);
+        } else {
+          console.log("No data available");
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, []);
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      const stRef = storageRef(storage, "images/");
+      const result = await listAll(stRef);
       const sorted = result.items.sort((a, b) => {
         if (a.name < b.name) {
           return -1;
         }
         return 1;
       });
-      const urlPromises = sorted.map((imageRef) => getDownloadURL(imageRef));
+      const urlPromises = sorted.map(async (imageRef) => {
+        const url = await getDownloadURL(imageRef);
+        const name = imageRef.name;
+        return {
+          url: url,
+          resizedUrl: resizedImage(url, name),
+          name: name,
+        };
+      });
 
       const urls = await Promise.all(urlPromises);
       setImages(urls);
+    };
+
+    try {
+      fetchImages();
     } catch (error) {
       console.log(error);
       setErrorState(true);
       setErrorMessage("画像を取得できませんでした。");
     }
-  };
-  const fetchFavorites = async () => {
-    const userFavoritesRef = dbRef(database, "userFavorites/test_user");
-    const fav: string[] = [];
-    await get(userFavoritesRef).then((snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        for (const key in data) {
-          fav.push(data[key].url);
-        }
-      } else {
-        console.log("No data available");
-      }
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-    setFavorites(fav);
-  }
+  }, []);
 
   useEffect(() => {
-    fetchImages();
-    fetchFavorites();
-    if (uploadFormContainerRef.current) {
-    const marginBottom = `${uploadFormContainerRef.current.offsetHeight}px`;
-    const imageGrid = document.querySelector('.image-grid');
-    if (imageGrid) {
-      const imageGrid = document.querySelector('.image-grid') as HTMLElement;
-      imageGrid.style.marginBottom = marginBottom;
-    }
-  }
+    setIsMounted(true);
+    return () => setIsMounted(false);
   }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddButtonClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const resizedImage = (url: string, name: string) => {
+    const n = name.split(".");
+    const resizedUrl = url.replace(
+      name,
+      "resized%2F" + n[0] + "_200x200." + n[1]
+    );
+    return resizedUrl;
   };
 
   const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -94,19 +136,27 @@ const ListPage = () => {
       }
 
       const storage = getStorage();
-      const storageRef = ref(storage, "images/");
+      const stRef = storageRef(storage, "images/");
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const fileRef = ref(storageRef, `${file.name}`);
+        const fileRef = storageRef(stRef, `${file.name}`);
         await uploadBytes(fileRef, file);
-        console.log(`${file.name}をアップロードしました`);
+        const url = await getDownloadURL(fileRef);
+        setImages([
+          ...images,
+          {
+            url: url,
+            resizedUrl: resizedImage(url, file.name),
+            name: file.name,
+          },
+        ]);
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       }
       console.log("アップロード完了");
-      setIsSnackbarOpen(true);
       // アップロード後にフォームをリセットする
       fileInputRef.current.value = "";
 
-      fetchImages();
+      setIsSnackbarOpen(true);
     } catch (error) {
       console.log(error);
       setErrorState(true);
@@ -114,39 +164,47 @@ const ListPage = () => {
     }
   };
 
-  const handleFavoriteButtonClick = async(url: string, username: string) => {
-    if (!favorites.includes(url)) {
-      if(favorites.length >= 5) {
-        setErrorState(true);
-        setErrorMessage("お気に入りは5つまでです。");
+  const handleFavoriteButtonClick = async (url: string, username: string) => {
+    if (isMounted) {
+      const userFavoritesRef = dbRef(database, "userFavorites/" + username);
+      if (!favorites.includes(url)) {
+        if (favorites.length >= 5) {
+          setErrorState(true);
+          setErrorMessage("お気に入りは5つまでです。");
+          return;
+        }
+        push(userFavoritesRef, {
+          url: url,
+        });
+        setFavorites([...favorites, url]);
         return;
       }
-      const userFavoritesRef = dbRef(database, "userFavorites/" + username);
-      push(userFavoritesRef, {
-        url: url,
-      });
-      await fetchFavorites();
-      return;
-    }
-    const userFavoritesRef = dbRef(database, "userFavorites/" + username);
-    await get(userFavoritesRef)
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          for (const key in data) {
-            if (data[key].url === url) {
-              const deleteRef = dbRef(database, "userFavorites/" + username + "/" + key);
-              set(deleteRef, {});
+      await get(userFavoritesRef)
+        .then((snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            for (const key in data) {
+              if (data[key].url === url) {
+                const deleteRef = dbRef(
+                  database,
+                  "userFavorites/" + username + "/" + key
+                );
+                set(deleteRef, {});
+                setFavorites(
+                  favorites.filter((favorite) => {
+                    return favorite !== url;
+                  })
+                );
+              }
             }
+          } else {
+            console.log("No data available");
           }
-        } else {
-          console.log("No data available");
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-    await fetchFavorites(); // お気に入り削除後にお気に入りを再取得
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
   };
 
   const handleSnackbarClose = () => {
@@ -161,16 +219,37 @@ const ListPage = () => {
       <div className="image-grid">
         {images.map((image, index) => (
           <div key={index} className="image-item">
-            <img src={image} alt="" loading="lazy" />
+            <img
+              src={image.resizedUrl}
+              alt=""
+              loading="lazy"
+              onClick={() => handleImageClick(image)}
+            />
             <IconButton
               className="like-icon"
-              onClick={async() => handleFavoriteButtonClick(image, "test_user")}
+              onClick={async () =>
+                handleFavoriteButtonClick(image.url, "test_user")
+              }
             >
-              <FavoriteIcon style={{ color: favorites.includes(image) ? 'red' : 'grey' }} />
+              <FavoriteIcon
+                style={{
+                  color: favorites.includes(image.url) ? "red" : "grey",
+                }}
+              />
             </IconButton>
           </div>
         ))}
       </div>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="simple-modal-title"
+        aria-describedby="simple-modal-description"
+      >
+        <div style={{ color: "white" }}>
+          <img src={selectedImage?.url} alt="" style={{ width: "100%" }} />
+        </div>
+      </Modal>
       <div className="upload-form-container" ref={uploadFormContainerRef}>
         <div className="upload-form">
           <form onSubmit={handleFormSubmit}>
