@@ -16,13 +16,9 @@ import { Modal, Snackbar } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import { set } from "firebase/database";
 import "./ListPage.css"; // CSSをインポート
+import Image from "./types/Image"
 
 const ListPage = () => {
-  type Image = {
-    url: string;
-    resizedUrl: string;
-    name: string;
-  };
   const [images, setImages] = useState<Image[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]); // お気に入りの画像のURLを格納する配列
   const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
